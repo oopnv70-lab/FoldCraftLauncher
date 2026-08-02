@@ -2,7 +2,10 @@ package com.tungsten.fcl.ui;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
+import android.view.Gravity;
 import android.view.View;
+import android.view.Window;
+import android.view.WindowManager;
 import android.widget.ListView;
 
 import androidx.annotation.NonNull;
@@ -41,6 +44,19 @@ public class TaskDialog extends FCLDialog implements View.OnClickListener {
         super(context);
         setContentView(R.layout.dialog_task);
         setCancelable(false);
+
+        // === 浮动弹窗改造：顶部悬浮，下层可触摸 ===
+        Window window = getWindow();
+        if (window != null) {
+            WindowManager.LayoutParams params = window.getAttributes();
+            params.gravity = Gravity.TOP | Gravity.CENTER_HORIZONTAL;
+            params.y = (int) (8 * context.getResources().getDisplayMetrics().density);
+            params.width = (int) (context.getResources().getDisplayMetrics().widthPixels * 0.92);
+            params.flags |= WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL;
+            params.flags |= WindowManager.LayoutParams.FLAG_WATCH_OUTSIDE_TOUCH;
+            params.dimAmount = 0.2f;
+            window.setAttributes(params);
+        }
 
         titleView = findViewById(R.id.title);
         taskListView = findViewById(R.id.list);
