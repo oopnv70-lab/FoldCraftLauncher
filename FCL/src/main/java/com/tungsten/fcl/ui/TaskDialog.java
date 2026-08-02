@@ -49,9 +49,9 @@ public class TaskDialog extends FCLDialog implements View.OnClickListener {
     private Window window;
     private WindowManager.LayoutParams windowParams;
 
-    private static final int COLLAPSED_WIDTH_DP = 200;
-    private static final int EXPANDED_WIDTH_DP = 300;
-    private static final int COLLAPSED_HEIGHT_DP = 42;
+    private static final int COLLAPSED_WIDTH_DP = 160;
+    private static final int EXPANDED_WIDTH_DP = 280;
+    private static final int COLLAPSED_HEIGHT_DP = 38;
     private static final int EXPANDED_MAX_HEIGHT_DP = 200;
     private static final int ANIM_DURATION = 250;
 
@@ -92,8 +92,9 @@ public class TaskDialog extends FCLDialog implements View.OnClickListener {
         // 点击弹窗任意位置 → 展开/收起
         findViewById(R.id.root).setOnClickListener(v -> toggle());
 
-        // 初始状态：收起（隐藏展开区）
+        // 初始状态：收起（隐藏展开区和取消按钮）
         expandArea.setVisibility(View.GONE);
+        cancelButton.setVisibility(View.GONE);
 
         speedEventHandler = speedEvent -> {
             String unit = "B/s";
@@ -126,11 +127,13 @@ public class TaskDialog extends FCLDialog implements View.OnClickListener {
     private void expand() {
         isExpanded = true;
         expandArea.setVisibility(View.VISIBLE);
+        cancelButton.setVisibility(View.VISIBLE);
         animateSize(COLLAPSED_WIDTH_DP, EXPANDED_WIDTH_DP, COLLAPSED_HEIGHT_DP, EXPANDED_MAX_HEIGHT_DP);
     }
 
     private void collapse() {
         isExpanded = false;
+        cancelButton.setVisibility(View.GONE);
         animateSize(EXPANDED_WIDTH_DP, COLLAPSED_WIDTH_DP, EXPANDED_MAX_HEIGHT_DP, COLLAPSED_HEIGHT_DP);
         // 动画结束后隐藏
         expandArea.postDelayed(() -> expandArea.setVisibility(View.GONE), ANIM_DURATION);
