@@ -45,16 +45,17 @@ public class TaskDialog extends FCLDialog implements View.OnClickListener {
         setContentView(R.layout.dialog_task);
         setCancelable(false);
 
-        // === 浮动弹窗改造：顶部悬浮，下层可触摸 ===
+        // === 浮动弹窗改造：居中圆角小卡片，下层可触摸 ===
         Window window = getWindow();
         if (window != null) {
             WindowManager.LayoutParams params = window.getAttributes();
-            params.gravity = Gravity.TOP | Gravity.CENTER_HORIZONTAL;
-            params.y = (int) (8 * context.getResources().getDisplayMetrics().density);
-            params.width = (int) (context.getResources().getDisplayMetrics().widthPixels * 0.92);
+            params.gravity = Gravity.CENTER;
+            params.y = (int) (-80 * context.getResources().getDisplayMetrics().density);
+            params.width = (int) (300 * context.getResources().getDisplayMetrics().density);
+            params.height = WindowManager.LayoutParams.WRAP_CONTENT;
             params.flags |= WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL;
             params.flags |= WindowManager.LayoutParams.FLAG_WATCH_OUTSIDE_TOUCH;
-            params.dimAmount = 0.2f;
+            params.dimAmount = 0.15f;
             window.setAttributes(params);
         }
 
