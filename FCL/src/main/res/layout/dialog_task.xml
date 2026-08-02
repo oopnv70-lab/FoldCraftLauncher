@@ -42,7 +42,8 @@
             android:text="@string/dialog_negative"
             android:minWidth="48dp"
             android:paddingStart="8dp"
-            android:paddingEnd="8dp" />
+            android:paddingEnd="8dp"
+            android:visibility="gone" />
     </LinearLayout>
 
     <!-- ====== 展开区：下载速度 + 任务列表 ====== -->
