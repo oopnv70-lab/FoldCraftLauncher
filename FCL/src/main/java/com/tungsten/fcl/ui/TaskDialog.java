@@ -70,11 +70,10 @@ public class TaskDialog extends FCLDialog implements View.OnClickListener {
             window.setBackgroundDrawableResource(android.R.color.transparent);
             windowParams = window.getAttributes();
             windowParams.gravity = Gravity.TOP | Gravity.CENTER_HORIZONTAL;
-            windowParams.y = (int) (40 * density);
+            windowParams.y = (int) (20 * density);
             windowParams.width = (int) (COLLAPSED_WIDTH_DP * density);
             windowParams.height = (int) (COLLAPSED_HEIGHT_DP * density);
             windowParams.flags |= WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL;
-            windowParams.flags |= WindowManager.LayoutParams.FLAG_WATCH_OUTSIDE_TOUCH;
             windowParams.dimAmount = 0.0f;
             window.setAttributes(windowParams);
         }
