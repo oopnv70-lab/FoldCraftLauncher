@@ -62,6 +62,7 @@ public class TaskDialog extends FCLDialog implements View.OnClickListener {
                 activeDialog.updateQueueIndicator();
             } else {
                 activeDialog = new TaskDialog(activeDialog, cancelAction);
+                activeDialog.queued = true; // 标记走排队
                 activeDialog.setTitle(title);
                 activeDialog.setExecutor(executor, autoClose);
                 activeDialog.show();
@@ -74,24 +75,31 @@ public class TaskDialog extends FCLDialog implements View.OnClickListener {
         QueuedTask next = pendingQueue.poll();
         if (next != null) {
             // 复用当前弹窗实例，换新任务
-            activeDialog.setTitle(next.title);
-            activeDialog.setCancel(next.cancelAction);
-            activeDialog.setExecutor(next.executor, next.autoClose);
-            next.executor.start();
-            activeDialog.updateQueueIndicator();
+            if (activeDialog != null && activeDialog.isShowing()) {
+                activeDialog.setTitle(next.title);
+                activeDialog.setCancel(next.cancelAction);
+                activeDialog.setExecutor(next.executor, next.autoClose);
+                next.executor.start();
+                activeDialog.updateQueueIndicator();
+            }
         } else {
-            activeDialog.dismiss();
-            activeDialog = null;
+            // 队列空，关闭弹窗
+            if (activeDialog != null) {
+                activeDialog.dismiss();
+                activeDialog = null;
+            }
         }
     }
 
     private void updateQueueIndicator() {
         int qSize = pendingQueue.size();
         if (qSize > 0) {
-            // 在标题后追加队列计数，收起态可见
             titleView.setString(getTitle() + " · 队列:" + qSize);
         }
     }
+
+    /** 标记此实例是否通过 enqueue() 创建，决定 onStop/onClick 是否走 dequeue */
+    private boolean queued = false;
     // ================================================
 
     private FCLTextView titleView;
@@ -226,8 +234,12 @@ public class TaskDialog extends FCLDialog implements View.OnClickListener {
                     @Override
                     public void onStop(boolean success, TaskExecutor executor) {
                         Schedulers.androidUIThread().execute(() -> {
-                            // 不直接 dismiss，走 dequeue 逻辑
-                            dequeueNext();
+                            if (queued) {
+                                dequeueNext();
+                            } else {
+                                // 直接 new 的实例（非排队），保持原行为：完成就 dismiss
+                                dismiss();
+                            }
                         });
                     }
                 });
@@ -257,8 +269,11 @@ public class TaskDialog extends FCLDialog implements View.OnClickListener {
         if (view == cancelButton) {
             Optional.ofNullable(executor).ifPresent(TaskExecutor::cancel);
             onCancel.getCancellationAction().accept(this);
-            // 取消当前 → 出队下一个
-            dequeueNext();
+            if (queued) {
+                dequeueNext();
+            } else {
+                dismiss();
+            }
         }
     }
 }
