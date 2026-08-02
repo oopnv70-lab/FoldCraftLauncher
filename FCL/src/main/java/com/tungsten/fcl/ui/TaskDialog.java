@@ -52,6 +52,7 @@ public class TaskDialog extends FCLDialog implements View.OnClickListener {
     private static final int COLLAPSED_WIDTH_DP = 200;
     private static final int EXPANDED_WIDTH_DP = 300;
     private static final int COLLAPSED_HEIGHT_DP = 42;
+    private static final int EXPANDED_MAX_HEIGHT_DP = 200;
     private static final int ANIM_DURATION = 250;
 
     @SuppressLint("DefaultLocale")
@@ -65,6 +66,8 @@ public class TaskDialog extends FCLDialog implements View.OnClickListener {
         // === 灵动岛浮动弹窗 ===
         window = getWindow();
         if (window != null) {
+            // 消除 FCLDialog 基类给的白色边框背景
+            window.setBackgroundDrawableResource(android.R.color.transparent);
             windowParams = window.getAttributes();
             windowParams.gravity = Gravity.TOP | Gravity.CENTER_HORIZONTAL;
             windowParams.y = (int) (40 * density);
@@ -124,12 +127,12 @@ public class TaskDialog extends FCLDialog implements View.OnClickListener {
     private void expand() {
         isExpanded = true;
         expandArea.setVisibility(View.VISIBLE);
-        animateSize(COLLAPSED_WIDTH_DP, EXPANDED_WIDTH_DP, COLLAPSED_HEIGHT_DP, WindowManager.LayoutParams.WRAP_CONTENT);
+        animateSize(COLLAPSED_WIDTH_DP, EXPANDED_WIDTH_DP, COLLAPSED_HEIGHT_DP, EXPANDED_MAX_HEIGHT_DP);
     }
 
     private void collapse() {
         isExpanded = false;
-        animateSize(EXPANDED_WIDTH_DP, COLLAPSED_WIDTH_DP, WindowManager.LayoutParams.WRAP_CONTENT, COLLAPSED_HEIGHT_DP);
+        animateSize(EXPANDED_WIDTH_DP, COLLAPSED_WIDTH_DP, EXPANDED_MAX_HEIGHT_DP, COLLAPSED_HEIGHT_DP);
         // 动画结束后隐藏
         expandArea.postDelayed(() -> expandArea.setVisibility(View.GONE), ANIM_DURATION);
     }
@@ -138,17 +141,13 @@ public class TaskDialog extends FCLDialog implements View.OnClickListener {
         int fromW = (int) (fromWdp * density);
         int toW = (int) (toWdp * density);
         int fromH = (int) (fromHdp * density);
-        int toH = toHdp == WindowManager.LayoutParams.WRAP_CONTENT ? fromH * 3 : (int) (toHdp * density);
+        int toH = (int) (toHdp * density);
 
         Animation anim = new Animation() {
             @Override
             protected void applyTransformation(float interpolatedTime, Transformation t) {
                 windowParams.width = fromW + (int) ((toW - fromW) * interpolatedTime);
-                if (toHdp == WindowManager.LayoutParams.WRAP_CONTENT) {
-                    windowParams.height = WindowManager.LayoutParams.WRAP_CONTENT;
-                } else {
-                    windowParams.height = fromH + (int) ((toH - fromH) * interpolatedTime);
-                }
+                windowParams.height = fromH + (int) ((toH - fromH) * interpolatedTime);
                 window.setAttributes(windowParams);
             }
         };
