@@ -11,6 +11,7 @@ import android.view.animation.Animation;
 import android.view.animation.Transformation;
 import android.widget.LinearLayout;
 import android.widget.ListView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 
@@ -67,8 +68,6 @@ public class TaskDialog extends FCLDialog implements View.OnClickListener {
         super(context);
         setContentView(R.layout.dialog_task);
         setCancelable(false);
-
-        currentInstance = this;
 
         density = getContext().getResources().getDisplayMetrics().density;
 
@@ -173,6 +172,27 @@ public class TaskDialog extends FCLDialog implements View.OnClickListener {
     public void setCancel(TaskCancellationAction onCancel) {
         this.onCancel = onCancel;
         cancelButton.setEnabled(onCancel != null);
+    }
+
+    @Override
+    public void show() {
+        if (currentInstance != null && currentInstance != this && currentInstance.isShowing()) {
+            Toast.makeText(getContext(), "已有下载任务进行中，请等待完成", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        currentInstance = this;
+        super.show();
+    }
+
+    public boolean showAndStart(TaskExecutor executor) {
+        if (currentInstance != null && currentInstance != this && currentInstance.isShowing()) {
+            Toast.makeText(getContext(), "已有下载任务进行中，请等待完成", Toast.LENGTH_SHORT).show();
+            return false;
+        }
+        currentInstance = this;
+        super.show();
+        executor.start();
+        return true;
     }
 
     @Override
