@@ -32,10 +32,20 @@ import java.nio.charset.Charset;
 public class ModpackInstaller {
 
     public static void installModpack(Context context, Task<?> task, boolean update) {
+        // === 并发控制：已有下载任务时弹提示，禁止新建 ===
+        if (TaskDialog.isBusy()) {
+            FCLAlertDialog.Builder builder = new FCLAlertDialog.Builder(context);
+            builder.setAlertLevel(FCLAlertDialog.AlertLevel.INFO);
+            builder.setCancelable(false);
+            builder.setMessage("正在下载中，请等待当前下载完成后重试");
+            builder.setNegativeButton(context.getString(com.tungsten.fcllibrary.R.string.dialog_positive), null);
+            builder.create().show();
+            return;
+        }
+
         String title = context.getString(R.string.install_modpack);
         TaskCancellationAction cancelAction = new TaskCancellationAction(AppCompatDialog::dismiss);
-        
-        // 先把 executor 准备好（不依赖 TaskDialog 实例）
+
         TaskExecutor executor = task.executor(new TaskListener() {
             @Override
             public void onStop(boolean success, TaskExecutor executor) {
@@ -93,8 +103,12 @@ public class ModpackInstaller {
             }
         });
 
-        // 走排队机制
-        TaskDialog.enqueue(title, executor, cancelAction, true);
+        // 正常创建弹窗（排队机制已注释禁用）
+        TaskDialog pane = new TaskDialog(context, cancelAction);
+        pane.setTitle(title);
+        pane.setExecutor(executor);
+        pane.show();
+        executor.start();
     }
 
     public static Task<?> getModpackInstallTask(Profile profile, File selected, String name, Charset charset) {
