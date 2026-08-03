@@ -1,7 +1,6 @@
 package com.tungsten.fcl.ui.download.modpack;
 
 import android.content.Context;
-import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatDialog;
 
@@ -33,12 +32,6 @@ import java.nio.charset.Charset;
 public class ModpackInstaller {
 
     public static void installModpack(Context context, Task<?> task, boolean update) {
-        // === 单下载保护：已有下载任务时弹出 Toast 提示并阻止 ===
-        if (TaskDialog.isShowingAny()) {
-            Toast.makeText(context, "已有下载任务进行中，请等待完成", Toast.LENGTH_SHORT).show();
-            return;
-        }
-
         String title = context.getString(R.string.install_modpack);
         TaskCancellationAction cancelAction = new TaskCancellationAction(AppCompatDialog::dismiss);
 
