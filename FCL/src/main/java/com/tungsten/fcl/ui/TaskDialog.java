@@ -34,7 +34,18 @@ import java.util.function.Consumer;
 
 public class TaskDialog extends FCLDialog implements View.OnClickListener {
 
-    // ==================== 排队机制 ====================
+    // ==================== 并发控制 ====================
+    private static TaskDialog activeDialog = null;
+
+    /**
+     * 检查是否有下载任务正在进行。
+     * 调用方应先调用此方法，若返回 true 则弹提示，不新建 TaskDialog。
+     */
+    public static boolean isBusy() {
+        return activeDialog != null && activeDialog.isShowing();
+    }
+
+    /* ==================== 排队机制（暂禁用，待后续优化代替）====================
     private static class QueuedTask {
         final String title;
         final TaskExecutor executor;
@@ -49,12 +60,7 @@ public class TaskDialog extends FCLDialog implements View.OnClickListener {
     }
 
     private static final Queue<QueuedTask> pendingQueue = new LinkedList<>();
-    private static TaskDialog activeDialog = null;
 
-    /**
-     * 入队下载任务。如果有弹窗正在显示，排队；
-     * 否则直接显示弹窗。
-     */
     public static void enqueue(String title, TaskExecutor executor, TaskCancellationAction cancelAction, boolean autoClose) {
         Schedulers.androidUIThread().execute(() -> {
             if (activeDialog != null && activeDialog.isShowing()) {
@@ -62,7 +68,7 @@ public class TaskDialog extends FCLDialog implements View.OnClickListener {
                 activeDialog.updateQueueIndicator();
             } else {
                 activeDialog = new TaskDialog(activeDialog, cancelAction);
-                activeDialog.queued = true; // 标记走排队
+                activeDialog.queued = true;
                 activeDialog.setTitle(title);
                 activeDialog.setExecutor(executor, autoClose);
                 activeDialog.show();
@@ -74,7 +80,6 @@ public class TaskDialog extends FCLDialog implements View.OnClickListener {
     private static void dequeueNext() {
         QueuedTask next = pendingQueue.poll();
         if (next != null) {
-            // 复用当前弹窗实例，换新任务
             if (activeDialog != null && activeDialog.isShowing()) {
                 activeDialog.setTitle(next.title);
                 activeDialog.setCancel(next.cancelAction);
@@ -83,7 +88,6 @@ public class TaskDialog extends FCLDialog implements View.OnClickListener {
                 activeDialog.updateQueueIndicator();
             }
         } else {
-            // 队列空，关闭弹窗
             if (activeDialog != null) {
                 activeDialog.dismiss();
                 activeDialog = null;
@@ -98,9 +102,8 @@ public class TaskDialog extends FCLDialog implements View.OnClickListener {
         }
     }
 
-    /** 标记此实例是否通过 enqueue() 创建，决定 onStop/onClick 是否走 dequeue */
     private boolean queued = false;
-    // ================================================
+    ==================== 排队机制（暂禁用）==================== */
 
     private FCLTextView titleView;
     private FCLTextView speedView;
@@ -176,11 +179,11 @@ public class TaskDialog extends FCLDialog implements View.OnClickListener {
         FileDownloadTask.speedEvent.channel(FileDownloadTask.SpeedEvent.class).registerWeak(speedEventHandler);
     }
 
-    // 保留公开构造（兼容直接 new 的调用方，如 LauncherHelper 启动步骤弹窗）
-    // 这些调用方不走 enqueue 排队，独立实例
     @SuppressLint("DefaultLocale")
     public TaskDialog(@NonNull Context context, @NotNull TaskCancellationAction cancel) {
         this(storeContext(context), cancel);
+        // 注册为活跃弹窗（用于 isBusy() 并发控制）
+        activeDialog = this;
     }
 
     private static TaskDialog storeContext(Context ctx) {
@@ -233,14 +236,7 @@ public class TaskDialog extends FCLDialog implements View.OnClickListener {
                 executor.addTaskListener(new TaskListener() {
                     @Override
                     public void onStop(boolean success, TaskExecutor executor) {
-                        Schedulers.androidUIThread().execute(() -> {
-                            if (queued) {
-                                dequeueNext();
-                            } else {
-                                // 直接 new 的实例（非排队），保持原行为：完成就 dismiss
-                                dismiss();
-                            }
-                        });
+                        Schedulers.androidUIThread().execute(() -> dismiss());
                     }
                 });
             }
@@ -261,6 +257,7 @@ public class TaskDialog extends FCLDialog implements View.OnClickListener {
     @Override
     public void dismiss() {
         FileDownloadTask.speedEvent.channel(FileDownloadTask.SpeedEvent.class).unregister(speedEventHandler);
+        if (activeDialog == this) activeDialog = null;
         super.dismiss();
     }
 
@@ -269,11 +266,7 @@ public class TaskDialog extends FCLDialog implements View.OnClickListener {
         if (view == cancelButton) {
             Optional.ofNullable(executor).ifPresent(TaskExecutor::cancel);
             onCancel.getCancellationAction().accept(this);
-            if (queued) {
-                dequeueNext();
-            } else {
-                dismiss();
-            }
+            dismiss();
         }
     }
 }
