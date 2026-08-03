@@ -32,6 +32,10 @@ import java.nio.charset.Charset;
 public class ModpackInstaller {
 
     public static void installModpack(Context context, Task<?> task, boolean update) {
+        if (TaskDialog.isShowingAny()) {
+            android.widget.Toast.makeText(context, "已有下载任务进行中，请等待完成", android.widget.Toast.LENGTH_SHORT).show();
+            return;
+        }
         String title = context.getString(R.string.install_modpack);
         TaskCancellationAction cancelAction = new TaskCancellationAction(AppCompatDialog::dismiss);
 
