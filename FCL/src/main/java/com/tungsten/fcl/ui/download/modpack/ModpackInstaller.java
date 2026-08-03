@@ -99,12 +99,13 @@ public class ModpackInstaller {
             }
         });
 
-        // 正常创建弹窗（排队机制已注释禁用）
+        // 正常创建下载弹窗
         TaskDialog pane = new TaskDialog(context, cancelAction);
         pane.setTitle(title);
         pane.setExecutor(executor);
-        pane.show();
-        executor.start();
+        if (!pane.showAndStart(executor)) {
+            return;
+        }
     }
 
     public static Task<?> getModpackInstallTask(Profile profile, File selected, String name, Charset charset) {
