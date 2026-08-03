@@ -43,7 +43,6 @@ public class TaskDialog extends FCLDialog implements View.OnClickListener {
         return busyFlag;
     }
 
-
     private FCLTextView titleView;
     private FCLTextView speedView;
     private FCLButton cancelButton;
@@ -67,18 +66,15 @@ public class TaskDialog extends FCLDialog implements View.OnClickListener {
     private static final int EXPANDED_MAX_HEIGHT_DP = 200;
     private static final int ANIM_DURATION = 250;
 
-    // 用于公开构造的 context 临时持有
-    private static Context pendingContext = null;
-
     @SuppressLint("DefaultLocale")
-    private TaskDialog(TaskDialog reuse, @NotNull TaskCancellationAction cancel) {
-        super(reuse != null ? reuse.getContext() : pendingContext);
+    public TaskDialog(@NonNull Context context, @NotNull TaskCancellationAction cancel) {
+        super(context);
         setContentView(R.layout.dialog_task);
         setCancelable(false);
+        busyFlag = true;
 
         density = getContext().getResources().getDisplayMetrics().density;
 
-        // === 灵动岛浮动弹窗 ===
         window = getWindow();
         if (window != null) {
             window.setBackgroundDrawableResource(android.R.color.transparent);
@@ -116,18 +112,6 @@ public class TaskDialog extends FCLDialog implements View.OnClickListener {
                 speedView.setText(String.format("%.1f %s", finalSpeed, finalUnit)));
         };
         FileDownloadTask.speedEvent.channel(FileDownloadTask.SpeedEvent.class).registerWeak(speedEventHandler);
-    }
-
-    @SuppressLint("DefaultLocale")
-    public TaskDialog(@NonNull Context context, @NotNull TaskCancellationAction cancel) {
-        this(storeContext(context), cancel);
-        // 标记为忙碌（用于 isBusy() 并发控制）
-        busyFlag = true;
-    }
-
-    private static TaskDialog storeContext(Context ctx) {
-        pendingContext = ctx;
-        return null;
     }
 
     private void toggle() {
