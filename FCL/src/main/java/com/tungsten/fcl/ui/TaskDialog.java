@@ -43,8 +43,18 @@ public class TaskDialog extends FCLDialog implements View.OnClickListener {
     public static boolean tryBusy() {
         synchronized (busyLock) {
             if (busyFlag) return false;
-            markBusy();
+            busyFlag = true;
             return true;
+        }
+    }
+
+    /**
+     * 查询忙碌状态（只读，不抢占锁）。
+     * 用于其他调用方的兼容检查。
+     */
+    public static boolean isBusy() {
+        synchronized (busyLock) {
+            return busyFlag;
         }
     }
 
@@ -53,19 +63,19 @@ public class TaskDialog extends FCLDialog implements View.OnClickListener {
      */
     public static void ensureUnbusy() {
         synchronized (busyLock) {
-            markUnbusy();
+            busyFlag = false;
         }
     }
 
     private void markBusy() {
         synchronized (busyLock) {
-            markBusy();
+            busyFlag = true;
         }
     }
 
     private void markUnbusy() {
         synchronized (busyLock) {
-            markUnbusy();
+            busyFlag = false;
         }
     }
 
