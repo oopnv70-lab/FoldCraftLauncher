@@ -33,7 +33,7 @@ public class ModpackInstaller {
 
     public static void installModpack(Context context, Task<?> task, boolean update) {
         // === 并发控制：已有下载任务时弹提示，禁止新建 ===
-        if (TaskDialog.isBusy()) {
+        if (!TaskDialog.tryBusy()) {
             FCLAlertDialog.Builder builder = new FCLAlertDialog.Builder(context);
             builder.setAlertLevel(FCLAlertDialog.AlertLevel.INFO);
             builder.setCancelable(false);
