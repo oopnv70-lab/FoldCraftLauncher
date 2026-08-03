@@ -32,53 +32,6 @@ import java.util.function.Consumer;
 
 public class TaskDialog extends FCLDialog implements View.OnClickListener {
 
-    // ==================== 并发控制 ====================
-    private static final Object busyLock = new Object();
-    private static volatile boolean busyFlag = false;
-
-    /**
-     * 尝试获取下载锁。成功返回 true，失败（已有下载进行中）返回 false。
-     * 调用方应先调用此方法，若返回 false 则弹提示，不新建 TaskDialog。
-     */
-    public static boolean tryBusy() {
-        synchronized (busyLock) {
-            if (busyFlag) return false;
-            busyFlag = true;
-            return true;
-        }
-    }
-
-    /**
-     * 查询忙碌状态（只读，不抢占锁）。
-     * 用于其他调用方的兼容检查。
-     */
-    public static boolean isBusy() {
-        synchronized (busyLock) {
-            return busyFlag;
-        }
-    }
-
-    /**
-     * 强制清除忙碌标志（异常兜底）。
-     */
-    public static void ensureUnbusy() {
-        synchronized (busyLock) {
-            busyFlag = false;
-        }
-    }
-
-    private void markBusy() {
-        synchronized (busyLock) {
-            busyFlag = true;
-        }
-    }
-
-    private void markUnbusy() {
-        synchronized (busyLock) {
-            busyFlag = false;
-        }
-    }
-
     private FCLTextView titleView;
     private FCLTextView speedView;
     private FCLButton cancelButton;
@@ -107,7 +60,6 @@ public class TaskDialog extends FCLDialog implements View.OnClickListener {
         super(context);
         setContentView(R.layout.dialog_task);
         setCancelable(false);
-        markBusy();
 
         density = getContext().getResources().getDisplayMetrics().density;
 
@@ -216,7 +168,6 @@ public class TaskDialog extends FCLDialog implements View.OnClickListener {
     @Override
     public void dismiss() {
         FileDownloadTask.speedEvent.channel(FileDownloadTask.SpeedEvent.class).unregister(speedEventHandler);
-        markUnbusy();
         super.dismiss();
     }
 
