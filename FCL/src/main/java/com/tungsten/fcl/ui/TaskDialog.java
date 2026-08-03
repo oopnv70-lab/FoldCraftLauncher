@@ -27,9 +27,7 @@ import com.tungsten.fcllibrary.component.view.FCLTextView;
 
 import org.jetbrains.annotations.NotNull;
 
-import java.util.LinkedList;
 import java.util.Optional;
-import java.util.Queue;
 import java.util.function.Consumer;
 
 public class TaskDialog extends FCLDialog implements View.OnClickListener {
@@ -45,65 +43,6 @@ public class TaskDialog extends FCLDialog implements View.OnClickListener {
         return busyFlag;
     }
 
-    /* ==================== 排队机制（暂禁用，待后续优化代替）====================
-    private static class QueuedTask {
-        final String title;
-        final TaskExecutor executor;
-        final TaskCancellationAction cancelAction;
-        final boolean autoClose;
-        QueuedTask(String title, TaskExecutor executor, TaskCancellationAction cancelAction, boolean autoClose) {
-            this.title = title;
-            this.executor = executor;
-            this.cancelAction = cancelAction;
-            this.autoClose = autoClose;
-        }
-    }
-
-    private static final Queue<QueuedTask> pendingQueue = new LinkedList<>();
-
-    public static void enqueue(String title, TaskExecutor executor, TaskCancellationAction cancelAction, boolean autoClose) {
-        Schedulers.androidUIThread().execute(() -> {
-            if (activeDialog != null && activeDialog.isShowing()) {
-                pendingQueue.offer(new QueuedTask(title, executor, cancelAction, autoClose));
-                activeDialog.updateQueueIndicator();
-            } else {
-                activeDialog = new TaskDialog(activeDialog, cancelAction);
-                activeDialog.queued = true;
-                activeDialog.setTitle(title);
-                activeDialog.setExecutor(executor, autoClose);
-                activeDialog.show();
-                executor.start();
-            }
-        });
-    }
-
-    private static void dequeueNext() {
-        QueuedTask next = pendingQueue.poll();
-        if (next != null) {
-            if (activeDialog != null && activeDialog.isShowing()) {
-                activeDialog.setTitle(next.title);
-                activeDialog.setCancel(next.cancelAction);
-                activeDialog.setExecutor(next.executor, next.autoClose);
-                next.executor.start();
-                activeDialog.updateQueueIndicator();
-            }
-        } else {
-            if (activeDialog != null) {
-                activeDialog.dismiss();
-                activeDialog = null;
-            }
-        }
-    }
-
-    private void updateQueueIndicator() {
-        int qSize = pendingQueue.size();
-        if (qSize > 0) {
-            titleView.setString(getTitle() + " · 队列:" + qSize);
-        }
-    }
-
-    private boolean queued = false;
-    ==================== 排队机制（暂禁用）==================== */
 
     private FCLTextView titleView;
     private FCLTextView speedView;
