@@ -35,14 +35,14 @@ import java.util.function.Consumer;
 public class TaskDialog extends FCLDialog implements View.OnClickListener {
 
     // ==================== 并发控制 ====================
-    private static TaskDialog activeDialog = null;
+    private static volatile boolean busyFlag = false;
 
     /**
      * 检查是否有下载任务正在进行。
      * 调用方应先调用此方法，若返回 true 则弹提示，不新建 TaskDialog。
      */
     public static boolean isBusy() {
-        return activeDialog != null && activeDialog.isShowing();
+        return busyFlag;
     }
 
     /* ==================== 排队机制（暂禁用，待后续优化代替）====================
@@ -182,8 +182,8 @@ public class TaskDialog extends FCLDialog implements View.OnClickListener {
     @SuppressLint("DefaultLocale")
     public TaskDialog(@NonNull Context context, @NotNull TaskCancellationAction cancel) {
         this(storeContext(context), cancel);
-        // 注册为活跃弹窗（用于 isBusy() 并发控制）
-        activeDialog = this;
+        // 标记为忙碌（用于 isBusy() 并发控制）
+        busyFlag = true;
     }
 
     private static TaskDialog storeContext(Context ctx) {
@@ -257,7 +257,7 @@ public class TaskDialog extends FCLDialog implements View.OnClickListener {
     @Override
     public void dismiss() {
         FileDownloadTask.speedEvent.channel(FileDownloadTask.SpeedEvent.class).unregister(speedEventHandler);
-        if (activeDialog == this) activeDialog = null;
+        busyFlag = false;
         super.dismiss();
     }
 
