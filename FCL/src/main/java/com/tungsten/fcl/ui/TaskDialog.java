@@ -32,6 +32,13 @@ import java.util.function.Consumer;
 
 public class TaskDialog extends FCLDialog implements View.OnClickListener {
 
+    // ==================== 单下载保护 ====================
+    private static TaskDialog currentInstance = null;
+
+    public static boolean isShowingAny() {
+        return currentInstance != null && currentInstance.isShowing();
+    }
+
     private FCLTextView titleView;
     private FCLTextView speedView;
     private FCLButton cancelButton;
@@ -55,22 +62,17 @@ public class TaskDialog extends FCLDialog implements View.OnClickListener {
     private static final int EXPANDED_MAX_HEIGHT_DP = 200;
     private static final int ANIM_DURATION = 250;
 
-    // === 单下载保护：当前活跃实例 ===
-    private static TaskDialog currentInstance = null;
-
-    public static boolean isShowingAny() {
-        return currentInstance != null && currentInstance.isShowing();
-    }
-
     @SuppressLint("DefaultLocale")
     public TaskDialog(@NonNull Context context, @NotNull TaskCancellationAction cancel) {
         super(context);
         setContentView(R.layout.dialog_task);
         setCancelable(false);
+
         currentInstance = this;
 
         density = getContext().getResources().getDisplayMetrics().density;
 
+        // === 灵动岛浮动弹窗 ===
         window = getWindow();
         if (window != null) {
             window.setBackgroundDrawableResource(android.R.color.transparent);
@@ -175,8 +177,8 @@ public class TaskDialog extends FCLDialog implements View.OnClickListener {
 
     @Override
     public void dismiss() {
-        if (currentInstance == this) currentInstance = null;
         FileDownloadTask.speedEvent.channel(FileDownloadTask.SpeedEvent.class).unregister(speedEventHandler);
+        if (currentInstance == this) currentInstance = null;
         super.dismiss();
     }
 
