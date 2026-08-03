@@ -55,11 +55,19 @@ public class TaskDialog extends FCLDialog implements View.OnClickListener {
     private static final int EXPANDED_MAX_HEIGHT_DP = 200;
     private static final int ANIM_DURATION = 250;
 
+    // === 单下载保护：当前活跃实例 ===
+    private static TaskDialog currentInstance = null;
+
+    public static boolean isShowingAny() {
+        return currentInstance != null && currentInstance.isShowing();
+    }
+
     @SuppressLint("DefaultLocale")
     public TaskDialog(@NonNull Context context, @NotNull TaskCancellationAction cancel) {
         super(context);
         setContentView(R.layout.dialog_task);
         setCancelable(false);
+        currentInstance = this;
 
         density = getContext().getResources().getDisplayMetrics().density;
 
@@ -167,6 +175,7 @@ public class TaskDialog extends FCLDialog implements View.OnClickListener {
 
     @Override
     public void dismiss() {
+        if (currentInstance == this) currentInstance = null;
         FileDownloadTask.speedEvent.channel(FileDownloadTask.SpeedEvent.class).unregister(speedEventHandler);
         super.dismiss();
     }
