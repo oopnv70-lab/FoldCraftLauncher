@@ -32,70 +32,69 @@ import java.nio.charset.Charset;
 public class ModpackInstaller {
 
     public static void installModpack(Context context, Task<?> task, boolean update) {
-        TaskDialog pane = new TaskDialog(context, new TaskCancellationAction(AppCompatDialog::dismiss));
-        pane.setTitle(context.getString(R.string.install_modpack));
-        Schedulers.androidUIThread().execute(() -> {
-            TaskExecutor executor = task.executor(new TaskListener() {
-                @Override
-                public void onStop(boolean success, TaskExecutor executor) {
-                    Schedulers.androidUIThread().execute(() -> {
-                        if (success) {
-                            FCLAlertDialog.Builder builder1 = new FCLAlertDialog.Builder(context);
-                            builder1.setAlertLevel(FCLAlertDialog.AlertLevel.INFO);
-                            builder1.setCancelable(false);
-                            builder1.setMessage(context.getString(R.string.install_success));
-                            builder1.setNegativeButton(context.getString(com.tungsten.fcllibrary.R.string.dialog_positive), () -> {
-                                if (update) {
-                                    ManagePageManager.getInstance().dismissCurrentTempPage();
-                                } else {
-                                    DownloadPageManager.getInstance().dismissCurrentTempPage();
-                                }
-                            });
-                            builder1.create().show();
-                        } else {
-                            if (executor.getException() == null)
-                                return;
-                            if (executor.getException() instanceof ModpackCompletionException) {
-                                if (executor.getException().getCause() instanceof FileNotFoundException) {
-                                    FCLAlertDialog.Builder builder1 = new FCLAlertDialog.Builder(context);
-                                    builder1.setAlertLevel(FCLAlertDialog.AlertLevel.ALERT);
-                                    builder1.setCancelable(false);
-                                    builder1.setTitle(context.getString(R.string.install_failed));
-                                    builder1.setMessage(context.getString(R.string.modpack_type_curse_not_found));
-                                    builder1.setNegativeButton(context.getString(com.tungsten.fcllibrary.R.string.dialog_positive), () -> {
-                                        if (update) {
-                                            ManagePageManager.getInstance().dismissCurrentTempPage();
-                                        } else {
-                                            DownloadPageManager.getInstance().dismissCurrentTempPage();
-                                        }
-                                    });
-                                    builder1.create().show();
-                                } else {
-                                    FCLAlertDialog.Builder builder1 = new FCLAlertDialog.Builder(context);
-                                    builder1.setAlertLevel(FCLAlertDialog.AlertLevel.INFO);
-                                    builder1.setCancelable(false);
-                                    builder1.setMessage(context.getString(R.string.install_success));
-                                    builder1.setNegativeButton(context.getString(com.tungsten.fcllibrary.R.string.dialog_positive), () -> {
-                                        if (update) {
-                                            ManagePageManager.getInstance().dismissCurrentTempPage();
-                                        } else {
-                                            DownloadPageManager.getInstance().dismissCurrentTempPage();
-                                        }
-                                    });
-                                    builder1.create().show();
-                                }
+        String title = context.getString(R.string.install_modpack);
+        TaskCancellationAction cancelAction = new TaskCancellationAction(AppCompatDialog::dismiss);
+        
+        // 先把 executor 准备好（不依赖 TaskDialog 实例）
+        TaskExecutor executor = task.executor(new TaskListener() {
+            @Override
+            public void onStop(boolean success, TaskExecutor executor) {
+                Schedulers.androidUIThread().execute(() -> {
+                    if (success) {
+                        FCLAlertDialog.Builder builder1 = new FCLAlertDialog.Builder(context);
+                        builder1.setAlertLevel(FCLAlertDialog.AlertLevel.INFO);
+                        builder1.setCancelable(false);
+                        builder1.setMessage(context.getString(R.string.install_success));
+                        builder1.setNegativeButton(context.getString(com.tungsten.fcllibrary.R.string.dialog_positive), () -> {
+                            if (update) {
+                                ManagePageManager.getInstance().dismissCurrentTempPage();
                             } else {
-                                VersionInstallInfoPage.alertFailureMessage(context, executor.getException(), () -> {});
+                                DownloadPageManager.getInstance().dismissCurrentTempPage();
                             }
+                        });
+                        builder1.create().show();
+                    } else {
+                        if (executor.getException() == null)
+                            return;
+                        if (executor.getException() instanceof ModpackCompletionException) {
+                            if (executor.getException().getCause() instanceof FileNotFoundException) {
+                                FCLAlertDialog.Builder builder1 = new FCLAlertDialog.Builder(context);
+                                builder1.setAlertLevel(FCLAlertDialog.AlertLevel.ALERT);
+                                builder1.setCancelable(false);
+                                builder1.setTitle(context.getString(R.string.install_failed));
+                                builder1.setMessage(context.getString(R.string.modpack_type_curse_not_found));
+                                builder1.setNegativeButton(context.getString(com.tungsten.fcllibrary.R.string.dialog_positive), () -> {
+                                    if (update) {
+                                        ManagePageManager.getInstance().dismissCurrentTempPage();
+                                    } else {
+                                        DownloadPageManager.getInstance().dismissCurrentTempPage();
+                                    }
+                                });
+                                builder1.create().show();
+                            } else {
+                                FCLAlertDialog.Builder builder1 = new FCLAlertDialog.Builder(context);
+                                builder1.setAlertLevel(FCLAlertDialog.AlertLevel.INFO);
+                                builder1.setCancelable(false);
+                                builder1.setMessage(context.getString(R.string.install_success));
+                                builder1.setNegativeButton(context.getString(com.tungsten.fcllibrary.R.string.dialog_positive), () -> {
+                                    if (update) {
+                                        ManagePageManager.getInstance().dismissCurrentTempPage();
+                                    } else {
+                                        DownloadPageManager.getInstance().dismissCurrentTempPage();
+                                    }
+                                });
+                                builder1.create().show();
+                            }
+                        } else {
+                            VersionInstallInfoPage.alertFailureMessage(context, executor.getException(), () -> {});
                         }
-
-                    });
-                }
-            });
-            pane.setExecutor(executor);
-            pane.show();
-            executor.start();
+                    }
+                });
+            }
         });
+
+        // 走排队机制
+        TaskDialog.enqueue(title, executor, cancelAction, true);
     }
 
     public static Task<?> getModpackInstallTask(Profile profile, File selected, String name, Charset charset) {
